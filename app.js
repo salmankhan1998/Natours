@@ -42,6 +42,61 @@ app.post('/api/v1/tours', (req, res) => {
   );
 });
 
+//API end-point for getting tour by ID
+app.get('/api/v1/tours/:id', (req, res) => {
+  const id = req.params.id * 1; //Coverts String to Number
+  // console.log(req);
+  const tour = tours.find((el) => el.id === id);
+
+  if (!tour) {
+    return res.status(404).json({
+      status: 'failed',
+      message: 'Invalid Id',
+    });
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      tour,
+    },
+  });
+});
+
+//API end-point for updating tour by ID
+app.patch('/api/v1/tours/:id', (req, res) => {
+  const id = req.params.id * 1; //Coverts String to Number
+  if (id > tours.length) {
+    return res.status(404).json({
+      status: 'failed',
+      message: 'Invalid Id',
+    });
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      tour: 'Updated tour',
+    },
+  });
+});
+
+//API end-point for deleting tour by ID
+app.delete('/api/v1/tours/:id', (req, res) => {
+  const id = req.params.id * 1; //Coverts String to Number
+  if (id > tours.length) {
+    return res.status(404).json({
+      status: 'failed',
+      message: 'Invalid Id',
+    });
+  }
+
+  res.status(204).json({
+    status: 'success',
+    data: null,
+  });
+});
+
 app.listen(port, () => {
   console.log(`App running on port ${port}...`);
 });
