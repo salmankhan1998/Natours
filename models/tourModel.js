@@ -7,6 +7,8 @@ const tourScheme = Schema(
       type: String,
       required: [true, 'Tour name is required!'],
       unique: true,
+      minLength: [10, 'Tour name must have at least 10 characters.'],
+      maxLength: [40, 'Tour name can only have 40 characters at most.'],
     },
     slug: String,
     duration: {
@@ -20,15 +22,23 @@ const tourScheme = Schema(
     difficulty: {
       type: String,
       required: [true, 'Tour difficulty is required!'],
+      enum: {
+        values: ['easy', 'medium', 'difficult'],
+        message:
+          'Difficulty can only have one of these value: easy, medium and difficult.',
+      },
     },
     ratingsAverage: {
       type: Number,
       default: 4.5,
+      min: [1, 'Average rating must be above 1.0.'],
+      max: [5, 'Average rating must be below 5.'],
+      //Custom Validator
       validate: {
         validator: function (v) {
-          return typeof v !== 'Number';
+          return typeof v !== 'Number' ? false : true;
         },
-        message: (props) => `${props.value} is not number, it's a string!`,
+        message: (props) => `${props.value} must be type Number, not a String!`,
         // message: (props) => `${props.value} is not a valid price!`,
       },
     },
@@ -40,14 +50,25 @@ const tourScheme = Schema(
       type: Number,
       validate: {
         validator: function (v) {
-          return typeof v !== 'Number';
+          return typeof v !== 'Number' ? false : true;
         },
         message: (props) => `${props.value} is not number, it's a string!`,
         // message: (props) => `${props.value} is not a valid price!`,
       },
       required: [true, 'Tour price is required!'],
     },
-    priceDiscount: Number,
+    priceDiscount: {
+      type: Number,
+      validate: {
+        validator: function (v) {
+          return v < this.price;
+        },
+        message: (props) =>
+          `Discunt price (${props.value}) must be lower than the actual price.`,
+        // message: (props) => `${props.value} is not a valid price!`,
+      },
+      required: [true, 'Tour price is required!'],
+    },
     summary: {
       type: String,
       trim: true,
@@ -67,6 +88,10 @@ const tourScheme = Schema(
       default: Date.now(),
     },
     startDates: [Date],
+    secretTour: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     toJSON: { virtuals: true },
@@ -82,7 +107,7 @@ tourScheme.virtual('durationWeeks').get(function () {
 });
 
 //DOCUMENT MIDDLEWARE
-//Runs before .save() and .create()
+//Runs before .save() and .create() but not update()
 tourScheme.pre('save', function (next) {
   this.slug = slugify(this.name, { lower: true });
   next();
@@ -95,6 +120,26 @@ tourScheme.pre('save', function (next) {
 
 tourScheme.post('save', function (document, next) {
   // console.log('current document:', document);
+  next();
+});
+
+// QUERY MIDDLEWARE
+tourScheme.pre(/^find/, function (next) {
+  this.find({ secretTour: { $ne: true } });
+  this.start = Date.now();
+  next();
+});
+
+tourScheme.post(/^find/, function (docs, next) {
+  // console.log(`Query took ${Date.now() - this.start}`);
+  next();
+});
+
+// AGGREGATION MIDDLEWARE
+// Applied to any aggregation pipeline of a tour api end-point
+tourScheme.pre('aggregate', function (next) {
+  this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
+  // console.log(this.pipeline());
   next();
 });
 
