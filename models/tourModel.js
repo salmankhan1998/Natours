@@ -52,7 +52,7 @@ const tourScheme = Schema(
         validator: function (v) {
           return typeof v !== 'Number' ? false : true;
         },
-        message: (props) => `${props.value} is not number, it's a string!`,
+        message: (props) => `${props.value} must be type Number, not a String!`,
         // message: (props) => `${props.value} is not a valid price!`,
       },
       required: [true, 'Tour price is required!'],
