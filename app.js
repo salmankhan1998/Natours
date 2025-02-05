@@ -1,5 +1,8 @@
 const express = require('express');
 const morgan = require('morgan');
+
+const AppError = require('./utils/appError');
+const globalErrorHandler = require('./controllers/errorControllers');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 
@@ -22,15 +25,21 @@ app.use(express.static(`${__dirname}/public`));
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 
-// Mounting a genaral router for all
+// Mounting a general router for all
 // other wrong url paths
 app.all('*', (req, res, next) => {
-  res.status(404).json({
-    status: 'failed',
-    message: `Invalid! Can't find ${req.originalUrl} on this server!`,
-  });
-  next();
+  // const err = new Error(
+  //   `Invalid! Can't find ${req.originalUrl} on this server!`,
+  // );
+  // err.status = 'failed';
+  // err.statusCode = 404;
+  next(
+    new AppError(`Invalid! Can't find ${req.originalUrl} on this server!`, 404),
+  );
 });
+
+// Global Error Handle Middleware Function
+app.use(globalErrorHandler);
 
 module.exports = app;
 
