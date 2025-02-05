@@ -1,4 +1,5 @@
 const Tour = require('../models/tourModel');
+const AppError = require('../utils/appError');
 const APIFeatures = require('./../utils/apiFeatures');
 const catchAsync = require('./../utils/catchAsync');
 
@@ -44,6 +45,10 @@ exports.getTour = catchAsync(async (req, res, next) => {
   const id = req.params.id;
 
   const tour = await Tour.findById(id);
+
+  // if (!tour) {
+  //   return next(new AppError('No tour foung with that Id', 404));
+  // }
 
   res.status(200).json({
     status: 'success',
@@ -147,6 +152,10 @@ exports.getMonthlyPlanTours = catchAsync(async (req, res, next) => {
       $limit: 12,
     },
   ]);
+
+  if (plans.length === 0) {
+    return next(new AppError('No planned tour found with this year', 404));
+  }
 
   res.status(200).json({
     status: 'success',
