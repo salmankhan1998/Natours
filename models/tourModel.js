@@ -36,7 +36,7 @@ const tourScheme = Schema(
       //Custom Validator
       validate: {
         validator: function (v) {
-          return typeof v !== 'Number' ? false : true;
+          return typeof v === 'Number' ? false : true; // If true return then error message displays
         },
         message: (props) => `${props.value} must be type Number, not a String!`,
         // message: (props) => `${props.value} is not a valid price!`,
@@ -50,7 +50,7 @@ const tourScheme = Schema(
       type: Number,
       validate: {
         validator: function (v) {
-          return typeof v !== 'Number' ? false : true;
+          return typeof v === 'Number' ? false : true; // If true return then error message displays
         },
         message: (props) => `${props.value} must be type Number, not a String!`,
         // message: (props) => `${props.value} is not a valid price!`,
