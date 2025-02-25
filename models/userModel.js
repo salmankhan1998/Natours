@@ -25,6 +25,7 @@ const userSchema = Schema({
     unique: true,
     required: [true, 'A user must have a pasword'],
     minLength: [8, 'A password must have at least 8 characters.'],
+    select: false,
   },
   passwordConfirm: {
     type: String,
@@ -50,6 +51,13 @@ userSchema.pre('save', async function (next) {
   this.passwordConfirm = undefined;
   next();
 });
+
+userSchema.methods.checkPassword = async function (
+  candidatePassword,
+  userPassword,
+) {
+  return await bcrypt.compare(candidatePassword, userPassword);
+};
 
 const User = model('User', userSchema);
 
