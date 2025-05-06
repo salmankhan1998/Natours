@@ -18,7 +18,7 @@ const sendEmail = async (options) => {
     subject: options.subject,
     html: `
         <p>You requested a password reset.</p>
-        <p>Click the link below to reset your password:</p>
+        <p>Click the link below to reset your password: ${options.resetToken}</p>
         <a href=${options.resetUrl}">Reset Password</a>
       `,
   };
