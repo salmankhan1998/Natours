@@ -63,6 +63,16 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
+// Pre-save middleware to update passwordChangedAt when password is modified
+userSchema.pre('save', function (next) {
+  // If password is not modified or the document is new, don't update passwordChangedAt
+  if (!this.isModified('password') || this.isNew) return next();
+
+  // Set passwordChangedAt to current time (subtract 1 second to ensure token is created after password change)
+  this.passwordChangedAt = Date.now() - 1000;
+  next();
+});
+
 userSchema.methods.checkPassword = async function (
   candidatePassword,
   userPassword,
@@ -78,6 +88,17 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   //False means password not changed
   return false;
 };
+
+// From Claude AI Tool // You might also want a method to check if password was changed after a token was issued
+// userSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
+//   if (this.passwordChangedAt) {
+//     const changedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
+//     return JWTTimestamp < changedTimestamp;
+//   }
+
+//   // False means NOT changed
+//   return false;
+// };
 
 userSchema.methods.createPasswordResetToken = function () {
   const resetToken = crypto.randomBytes(32).toString('hex');

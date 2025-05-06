@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
 const catchAsync = require('./../utils/catchAsync');
@@ -131,6 +132,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
       email: user.email,
       subject: 'Your password reset token (Valid for 10 min)!',
       resetUrl,
+      resetToken,
     });
 
     res.status(200).json({
@@ -150,6 +152,36 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   }
 });
 
-// exports.resetPassword = catchAsync(async (req, res, next) => {
-//   console.log('jere im ajnja');
-// });
+exports.resetPassword = catchAsync(async (req, res, next) => {
+  // 1) Get user based on token
+  const token = req.params.token;
+  const hashToken = crypto.createHash('sha256').update(token).digest('hex');
+
+  const user = await User.findOne({
+    passwordResetToken: hashToken,
+    passwordResetTokenExpires: { $gt: Date.now() },
+  });
+
+  // 2) If user exists and token not expired then set new password
+  if (!user) {
+    return next(new AppError('Token is invalid or has expired!', 400));
+  }
+
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  user.passwordResetToken = undefined;
+  user.passwordResetTokenExpires = undefined;
+
+  await user.save();
+
+  // 3) Update PasswordChangedAt property for user
+  //This is implemented through Mongoose middleware on pre save
+
+  // 4) Log in the user and Send JWT token
+  const newToken = generateJWTToken(user._id);
+
+  res.status(200).json({
+    status: 'success',
+    token: newToken,
+  });
+});
