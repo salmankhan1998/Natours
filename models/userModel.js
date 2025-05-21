@@ -49,6 +49,11 @@ const userSchema = Schema({
   },
   passwordResetToken: String,
   passwordResetTokenExpires: Date,
+  active: {
+    type: Boolean,
+    default: true,
+    select: false,
+  },
 });
 
 userSchema.pre('save', async function (next) {
@@ -70,6 +75,13 @@ userSchema.pre('save', function (next) {
 
   // Set passwordChangedAt to current time (subtract 1 second to ensure token is created after password change)
   this.passwordChangedAt = Date.now() - 1000;
+  next();
+});
+
+// Pre-find query middleware to filter out inactive users
+userSchema.pre(/^find/, function (next) {
+  // this points to the current query
+  this.find({ active: { $ne: false } });
   next();
 });
 
